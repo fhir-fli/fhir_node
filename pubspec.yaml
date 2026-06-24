@@ -1,0 +1,17 @@
+name: fhir_node
+description: >-
+  Minimal, dependency-free model-reflection interface (FhirNode) for
+  navigable FHIR data. Implemented by the fhir_r4/r5/r6 FhirBase classes and
+  consumed by the model-independent fhirpath (and cql) engines, so one engine
+  can navigate FHIR data of any version without depending on a specific
+  fhir_r* package.
+version: 0.1.0
+homepage: https://www.fhirfli.dev/
+repository: https://github.com/fhir-fli/fhir_node
+
+environment:
+  sdk: ^3.5.0
+
+dev_dependencies:
+  lints: ^5.1.1
+  test: ^1.29.0
