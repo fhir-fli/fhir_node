@@ -19,6 +19,11 @@ abstract class FhirNode {
   /// Whether this node is a primitive (carries a single scalar value).
   bool get isPrimitive;
 
+  /// Whether this node is a resource (the root of an independent FHIR data
+  /// tree, as opposed to an element within one). Mirrors the Java
+  /// reference's `Base.isResource()`.
+  bool get isResource;
+
   /// The scalar value of a primitive node as a string, or `null`.
   String? get primitiveValue;
 
