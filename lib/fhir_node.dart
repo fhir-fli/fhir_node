@@ -42,4 +42,14 @@ abstract class FhirNode {
 
   /// The single child under [name], or `null` (throws if more than one).
   FhirNode? getChildByName(String name);
+
+  /// Deep structural equality with [other]. Mirrors the Java reference's
+  /// `Base.equalsDeep(Base)`.
+  bool equalsDeep(covariant FhirNode? other);
+
+  /// Whether this node comes from a metadata-driven (element-model)
+  /// implementation rather than a generated class model. Mirrors the Java
+  /// reference's `Base.isMetadataBased()`; deep-equality helpers use it to
+  /// let the metadata-based side drive the comparison.
+  bool get isMetadataBased;
 }
