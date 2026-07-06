@@ -2,7 +2,7 @@ name: fhir_node
 description: >-
   Minimal model-reflection interface (FhirNode) letting model-independent
   FHIRPath/CQL engines navigate FHIR data of any version (R4/R5/R6).
-version: 0.1.0
+version: 0.6.0
 homepage: https://www.fhirfli.dev/
 repository: https://github.com/fhir-fli/fhir_node
 

@@ -1,4 +1,8 @@
-## 0.1.0
+## 0.6.0
+
+> Versioned 0.6.0 (not 0.1.0) to ship on the same release train as
+> the fhir_r4/r5/r6 family — the fhir-fli packages version in
+> lockstep (ucum excepted, which is independent).
 
 - Initial release: the read-only `FhirNode` model-reflection interface —
   `fhirType`, `isPrimitive`, `isResource`, `primitiveValue`, `hasType`,
