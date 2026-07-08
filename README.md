@@ -22,6 +22,17 @@ The member shapes deliberately mirror the Java reference implementation
 (`Base.listChildrenByName`, `fhirType`, `equalsDeep`, `isMetadataBased`)
 and are the same design point as .NET Firely's `ITypedElement`.
 
+`fhir_node` has **no dependencies** — it is the smallest of the
+model-independent foundation packages (with `ucum` and `fhirpath`) and the
+one every version-agnostic engine builds on.
+
+## Install
+
+```yaml
+dependencies:
+  fhir_node: ^0.6.0
+```
+
 ## Compatibility policy — read before depending on this
 
 `FhirNode` is an interface that other packages `implements`. Under Dart
@@ -44,7 +55,7 @@ Any class with a FHIR-shaped tree can participate:
 import 'package:fhir_node/fhir_node.dart';
 
 class MapNode implements FhirNode {
-  MapNode(this.type, this.value, [this.children = const {}]);
+  MapNode(this.type, {this.value, this.children = const {}});
   final String type;
   final String? value;
   final Map<String, List<MapNode>> children;
@@ -54,9 +65,11 @@ class MapNode implements FhirNode {
   @override
   bool get isPrimitive => value != null;
   @override
-  bool get isResource => type[0] == type[0].toUpperCase();
+  bool get isResource => type.isNotEmpty && type[0] == type[0].toUpperCase();
   @override
   String? get primitiveValue => value;
+  @override
+  bool get isMetadataBased => false;
   @override
   bool hasType(List<String> names) =>
       names.any((n) => n.toLowerCase() == type.toLowerCase());
@@ -76,7 +89,7 @@ class MapNode implements FhirNode {
     }
     return matches.isEmpty ? null : matches.first;
   }
-  // equalsDeep / isMetadataBased: see example/fhir_node_example.dart
+  // equalsDeep: see example/fhir_node_example.dart
   ...
 }
 ```
