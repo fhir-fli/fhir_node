@@ -1,0 +1,12 @@
+# Publish exclusions. NOTE: when .pubignore exists, pub uses it INSTEAD of
+# .gitignore — so this must carry over the .gitignore entries that matter.
+
+# Carried over from .gitignore
+.dart_tool/
+.packages
+pubspec.lock
+build/
+
+# Not part of the published package (tests stay in the repo; example/ ships)
+test/
+.github/
