@@ -7,24 +7,30 @@ import 'package:fhir_node/src/fhir_node.dart';
 /// name without a model to hand.
 ///
 /// A map is an element, a list is a repeat, anything else is a primitive
-/// whose [primitiveValue] is its text. The [fhirType] of a resource is its
-/// `resourceType`; of any other element it is the **element name** the
-/// node hangs under (`name`, `coding`), or the choice suffix for a choice
-/// element (`value` finds `valueQuantity`, typed `Quantity`), because JSON
-/// carries no type names. Code that needs real element types needs a
-/// version's model.
+/// whose [primitiveValue] is its text. JSON carries no type names, so the
+/// [fhirType] of a child is found in this order: a resource's
+/// `resourceType`; an [elementTypes] entry for `Parent.child` or `*.child`
+/// (`'Patient.name': 'HumanName'`), handed down to every descendant; a
+/// choice element's suffix (`value` finds `valueQuantity`, typed
+/// `Quantity`; `valueString` is typed `string`); a primitive's JSON type
+/// (`boolean`, `integer`, `decimal`, `string`); else the **element name**
+/// the node hangs under. Code that needs real element types gives a table
+/// or uses a version's model.
 class JsonNode implements FhirNode {
   /// Creates a node over [value] with the given [fhirType].
-  JsonNode(this.value, this.fhirType);
+  const JsonNode(this.value, this.fhirType, {this.elementTypes = const {}});
 
   /// A resource from its JSON map; throws [FormatException] without a
   /// `resourceType`.
-  factory JsonNode.resource(Map<String, dynamic> json) {
+  factory JsonNode.resource(
+    Map<String, dynamic> json, {
+    Map<String, String> elementTypes = const {},
+  }) {
     final type = json['resourceType'];
     if (type is! String) {
       throw FormatException('A resource needs a resourceType', json);
     }
-    return JsonNode(json, type);
+    return JsonNode(json, type, elementTypes: elementTypes);
   }
 
   /// The JSON this node is over: a map, a list, or a primitive.
@@ -32,6 +38,10 @@ class JsonNode implements FhirNode {
 
   @override
   final String fhirType;
+
+  /// Element → FHIR type (`'Patient.name': 'HumanName'`, `'*.id': 'id'`),
+  /// for the children this node and its descendants hand out.
+  final Map<String, String> elementTypes;
 
   /// The map this node is, for a resource or a complex element.
   Map<String, dynamic> get json => value! as Map<String, dynamic>;
@@ -73,27 +83,68 @@ class JsonNode implements FhirNode {
   @override
   List<FhirNode> getChildrenByName(String name, [bool checkValid = false]) {
     if (value is! Map) return const [];
+    var key = name;
     var v = json[name];
-    var type = name;
+    String? choiceType;
     if (v == null) {
-      for (final key in json.keys) {
-        if (key.startsWith(name) &&
-            key.length > name.length &&
-            key[name.length].toUpperCase() == key[name.length]) {
-          v = json[key];
-          type = key.substring(name.length);
+      for (final k in json.keys) {
+        if (k.startsWith(name) &&
+            k.length > name.length &&
+            k[name.length].toUpperCase() == k[name.length]) {
+          key = k;
+          v = json[k];
+          final suffix = k.substring(name.length);
+          final primitive = suffix[0].toLowerCase() + suffix.substring(1);
+          choiceType = _primitiveNames.contains(primitive) ? primitive : suffix;
           break;
         }
       }
     }
     if (v == null) return const [];
-    JsonNode node(Object? e) => JsonNode(
-          e,
-          e is Map<String, dynamic> && e['resourceType'] is String
-              ? e['resourceType'] as String
-              : type,
-        );
+    final tabled = elementTypes['$fhirType.$key'] ?? elementTypes['*.$key'];
+    JsonNode node(Object? e) {
+      final type = e is Map<String, dynamic> && e['resourceType'] is String
+          ? e['resourceType'] as String
+          : tabled ?? choiceType ?? _jsonType(e) ?? key;
+      return JsonNode(e, type, elementTypes: elementTypes);
+    }
+
     if (v is List) return [for (final e in v) node(e)];
     return [node(v)];
   }
+
+  /// The FHIR primitive type a JSON scalar implies, or null for a map or a
+  /// list.
+  static String? _jsonType(Object? e) => switch (e) {
+        bool _ => 'boolean',
+        int _ => 'integer',
+        num _ => 'decimal',
+        String _ => 'string',
+        _ => null,
+      };
+
+  /// The FHIR primitive type names, as choice-element suffixes spell them
+  /// once the first letter is lowered (`valueDateTime` → `dateTime`).
+  static const _primitiveNames = {
+    'base64Binary',
+    'boolean',
+    'canonical',
+    'code',
+    'date',
+    'dateTime',
+    'decimal',
+    'id',
+    'instant',
+    'integer',
+    'integer64',
+    'markdown',
+    'oid',
+    'positiveInt',
+    'string',
+    'time',
+    'unsignedInt',
+    'uri',
+    'url',
+    'uuid',
+  };
 }

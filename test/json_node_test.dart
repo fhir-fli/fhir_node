@@ -34,7 +34,9 @@ void main() {
     expect(patient.getChildByName('active')?.primitiveValue, 'true');
     expect(patient.getChildByName('active')?.isPrimitive, isTrue);
     final name = patient.getChildrenByName('name').single;
-    expect(name.fhirType, 'name');
+    expect(name.fhirType, 'name', reason: 'no table: the element name');
+    expect(name.getChildByName('family')?.fhirType, 'string');
+    expect(patient.getChildByName('active')?.fhirType, 'boolean');
     expect(name.getChildByName('family')?.primitiveValue, 'Smith');
     expect(
       name.getChildrenByName('given').map((g) => g.primitiveValue),
@@ -47,8 +49,32 @@ void main() {
 
   test('a choice element is found by its prefix and typed by its suffix', () {
     final deceased = patient.getChildByName('deceased');
-    expect(deceased?.fhirType, 'Boolean');
+    expect(deceased?.fhirType, 'boolean');
     expect(deceased?.primitiveValue, 'false');
+    final obs = JsonNode.resource({
+      'resourceType': 'Observation',
+      'valueQuantity': {'value': 1.5, 'unit': 'kg'},
+    });
+    final quantity = obs.getChildByName('value');
+    expect(quantity?.fhirType, 'Quantity');
+    expect(quantity?.getChildByName('value')?.fhirType, 'decimal');
+    expect(quantity?.getChildByName('unit')?.fhirType, 'string');
+  });
+
+  test('an element table names complex types and is handed down', () {
+    final typed = JsonNode.resource(
+      patient.json,
+      elementTypes: const {
+        'Patient.name': 'HumanName',
+        'HumanName.family': 'string',
+        '*.id': 'id',
+      },
+    );
+    final name = typed.getChildrenByName('name').single;
+    expect(name.fhirType, 'HumanName');
+    expect(name.getChildByName('family')?.fhirType, 'string');
+    expect(typed.getChildByName('id')?.fhirType, 'id');
+    expect(name.hasType(['humanname']), isTrue);
   });
 
   test('a nested resource is typed by its own resourceType', () {
@@ -59,7 +85,7 @@ void main() {
 
   test('listChildrenNames, isEmpty and equalsDeep', () {
     expect(patient.listChildrenNames(), contains('name'));
-    expect(JsonNode(null, 'string').isEmpty(), isTrue);
+    expect(const JsonNode(null, 'string').isEmpty(), isTrue);
     expect(patient.isEmpty(), isFalse);
     expect(
       patient.equalsDeep(JsonNode.resource(patient.json)),

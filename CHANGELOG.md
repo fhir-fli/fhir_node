@@ -7,7 +7,9 @@
   resource type names, from/to JSON), `errorOperationOutcomeJson` (the one
   error-issue OperationOutcome, as JSON, with optional contained
   resources), and `JsonNode` (a `FhirNode` over plain JSON, for tests and
-  tools without a model; element types are element names).
+  tools without a model; a child's type is its `resourceType`, an
+  optional element-type table entry, a choice suffix, the JSON scalar's
+  primitive type, or else its element name).
 
 ## 0.6.0
 
