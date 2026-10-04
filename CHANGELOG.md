@@ -1,3 +1,14 @@
+## 0.6.1
+
+- Alongside the `FhirNode` contract (unchanged), the pieces every
+  model-independent package in the family had started to copy:
+  `ResourceModel<R>` (what a version supplies to a package that reads
+  resources through `FhirNode` and builds them only from JSON: version,
+  resource type names, from/to JSON), `errorOperationOutcomeJson` (the one
+  error-issue OperationOutcome, as JSON, with optional contained
+  resources), and `JsonNode` (a `FhirNode` over plain JSON, for tests and
+  tools without a model; element types are element names).
+
 ## 0.6.0
 
 > Versioned 0.6.0 (not 0.1.0) to ship on the same release train as
